@@ -20,10 +20,14 @@ def test_admin_can_create_scan_and_status_is_readable(
         )
         log_api_response(start_res.request, start_res)
 
-    assert start_res.status_code == 200
+    assert (
+        start_res.status_code == 200
+    ), f"Expected 200 OK for scan creation, but got {start_res.status_code}"
     data = start_res.json()
-    assert "scan_id" in data
-    assert data["status"] == "IN_PROGRESS"
+    assert "scan_id" in data, "Scan creation response missing 'scan_id' field"
+    assert (
+        data["status"] == "IN_PROGRESS"
+    ), f"Expected status 'IN_PROGRESS', but got {data.get('status')}"
     scan_id = data["scan_id"]
 
     # 2. Administrator reads the scan status (Item 17)
@@ -34,10 +38,16 @@ def test_admin_can_create_scan_and_status_is_readable(
         )
         log_api_response(admin_status_res.request, admin_status_res)
 
-    assert admin_status_res.status_code == 200
+    assert (
+        admin_status_res.status_code == 200
+    ), f"Expected 200 OK for admin status check, but got {admin_status_res.status_code}"
     admin_data = admin_status_res.json()
-    assert admin_data["id"] == scan_id
-    assert admin_data["status"] in ("IN_PROGRESS", "COMPLETED", "FAILED")
+    assert admin_data["id"] == scan_id, "Admin status response returned wrong scan ID"
+    assert admin_data["status"] in (
+        "IN_PROGRESS",
+        "COMPLETED",
+        "FAILED",
+    ), f"Unexpected scan status: {admin_data.get('status')}"
 
     # 3. Regular user reads the scan status (Item 18)
     with httpx.Client(base_url=base_url) as client:
@@ -47,10 +57,16 @@ def test_admin_can_create_scan_and_status_is_readable(
         )
         log_api_response(user_status_res.request, user_status_res)
 
-    assert user_status_res.status_code == 200
+    assert (
+        user_status_res.status_code == 200
+    ), f"Expected 200 OK for user status check, but got {user_status_res.status_code}"
     user_data = user_status_res.json()
-    assert user_data["id"] == scan_id
-    assert user_data["status"] in ("IN_PROGRESS", "COMPLETED", "FAILED")
+    assert user_data["id"] == scan_id, "User status response returned wrong scan ID"
+    assert user_data["status"] in (
+        "IN_PROGRESS",
+        "COMPLETED",
+        "FAILED",
+    ), f"Unexpected scan status: {user_data.get('status')}"
 
 
 def test_user_cannot_create_scan(base_url, user_alpha_token):
@@ -65,4 +81,4 @@ def test_user_cannot_create_scan(base_url, user_alpha_token):
         )
         log_api_response(response.request, response)
 
-    assert response.status_code == 403
+    assert response.status_code == 403, "User can start the scan while shouldn't"

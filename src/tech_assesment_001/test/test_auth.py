@@ -20,5 +20,5 @@ def test_authorization_returns_tokens(base_url):
 
     access_token, refresh_token = get_tokens(base_url, email, password)
 
-    assert access_token
-    assert refresh_token
+    assert access_token, "Access token is missing in the login response"
+    assert refresh_token, "Refresh token is missing in the login response"

@@ -30,7 +30,10 @@ def test_asset(base_url, admin_alpha_token):  # pylint: disable=redefined-outer-
         )
         log_api_response(response.request, response)
 
-    assert response.status_code in (200, 201)
+    assert response.status_code in (
+        200,
+        201,
+    ), f"Fixture failed to create asset: expected 200/201, got {response.status_code}"
     asset_data = response.json()
     asset_id = asset_data["id"]
 
@@ -59,7 +62,9 @@ def test_user_regardless_of_role_can_read_assets(
             headers={"Authorization": f"Bearer {admin_alpha_token}"},
         )
         log_api_response(admin_response.request, admin_response)
-    assert admin_response.status_code == 200
+    assert (
+        admin_response.status_code == 200
+    ), f"Admin expected 200 OK for asset list, got {admin_response.status_code}"
 
     # 2. Test as Regular User
     with httpx.Client(base_url=base_url) as client:
@@ -68,16 +73,22 @@ def test_user_regardless_of_role_can_read_assets(
             headers={"Authorization": f"Bearer {user_alpha_token}"},
         )
         log_api_response(user_response.request, user_response)
-    assert user_response.status_code == 200
+    assert (
+        user_response.status_code == 200
+    ), f"User expected 200 OK for asset list, got {user_response.status_code}"
 
     # Basic validation of response structure
     admin_data = admin_response.json()
     user_data = user_response.json()
 
-    assert "items" in admin_data
-    assert isinstance(admin_data["items"], list)
-    assert "items" in user_data
-    assert isinstance(user_data["items"], list)
+    assert "items" in admin_data, "Admin response missing 'items' field"
+    assert isinstance(
+        admin_data["items"], list
+    ), "'items' field in admin response is not a list"
+    assert "items" in user_data, "User response missing 'items' field"
+    assert isinstance(
+        user_data["items"], list
+    ), "'items' field in user response is not a list"
 
 
 def test_admin_can_create_asset(test_asset):  # pylint: disable=redefined-outer-name
@@ -85,9 +96,10 @@ def test_admin_can_create_asset(test_asset):  # pylint: disable=redefined-outer-
     Test that an administrator can successfully create an asset.
     (Checklist item 3)
     """
-    # The fixture already created the asset and verified 200/201
-    assert "id" in test_asset
-    assert test_asset["name"].startswith("Test Asset")
+    assert "id" in test_asset, "Created asset missing 'id' field"
+    assert test_asset["name"].startswith(
+        "Test Asset"
+    ), f"Created asset name '{test_asset['name']}' does not start with expected prefix"
 
 
 def test_admin_can_update_asset(
@@ -114,10 +126,16 @@ def test_admin_can_update_asset(
         )
         log_api_response(update_res.request, update_res)
 
-    assert update_res.status_code == 200
+    assert (
+        update_res.status_code == 200
+    ), f"Admin expected 200 OK for asset update, got {update_res.status_code}"
     updated_data = update_res.json()
-    assert updated_data["name"] == update_payload["name"]
-    assert updated_data["region"] == update_payload["region"]
+    assert (
+        updated_data["name"] == update_payload["name"]
+    ), "Asset name was not updated correctly"
+    assert (
+        updated_data["region"] == update_payload["region"]
+    ), "Asset region was not updated correctly"
 
     # Verify the update was persisted with a GET request
     with httpx.Client(base_url=base_url) as client:
@@ -125,8 +143,12 @@ def test_admin_can_update_asset(
             f"/assets/{asset_id}",
             headers={"Authorization": f"Bearer {admin_alpha_token}"},
         )
-    assert get_res.status_code == 200
-    assert get_res.json()["name"] == update_payload["name"]
+    assert (
+        get_res.status_code == 200
+    ), f"Admin expected 200 OK when verifying updated asset, got {get_res.status_code}"
+    assert (
+        get_res.json()["name"] == update_payload["name"]
+    ), "Updated name was not persisted"
 
 
 def test_admin_can_delete_asset(
@@ -136,8 +158,6 @@ def test_admin_can_delete_asset(
     Test that an administrator can successfully delete an asset.
     (Checklist item 5)
     """
-    # We create a local asset here because Item 5 is specifically about the delete action.
-    # If we used the fixture, the teardown would fail (404) after we delete it in the test.
     create_name = generate_timestamped_name("Asset to Delete")
     payload = {
         "name": create_name,
@@ -152,7 +172,10 @@ def test_admin_can_delete_asset(
             headers={"Authorization": f"Bearer {admin_alpha_token}"},
             json=payload,
         )
-    assert create_res.status_code in (200, 201)
+    assert create_res.status_code in (
+        200,
+        201,
+    ), f"Failed to create temporary asset: expected 200/201, got {create_res.status_code}"
     asset_id = create_res.json()["id"]
 
     # Delete the asset
@@ -163,7 +186,10 @@ def test_admin_can_delete_asset(
         )
         log_api_response(delete_res.request, delete_res)
 
-    assert delete_res.status_code in (200, 204)
+    assert delete_res.status_code in (
+        200,
+        204,
+    ), f"Admin expected 200/204 for asset deletion, got {delete_res.status_code}"
 
     # Verify deletion
     with httpx.Client(base_url=base_url) as client:
@@ -171,7 +197,9 @@ def test_admin_can_delete_asset(
             f"/assets/{asset_id}",
             headers={"Authorization": f"Bearer {admin_alpha_token}"},
         )
-    assert get_res.status_code == 404
+    assert (
+        get_res.status_code == 404
+    ), f"Asset still exists after deletion: expected 404, got {get_res.status_code}"
 
 
 def test_user_can_read_asset(
@@ -190,8 +218,10 @@ def test_user_can_read_asset(
         )
         log_api_response(get_res.request, get_res)
 
-    assert get_res.status_code == 200
-    assert get_res.json()["id"] == asset_id
+    assert (
+        get_res.status_code == 200
+    ), f"User expected 200 OK for asset read, got {get_res.status_code}"
+    assert get_res.json()["id"] == asset_id, "User read returned wrong asset ID"
 
 
 def test_user_cannot_delete_asset(
@@ -211,7 +241,9 @@ def test_user_cannot_delete_asset(
         )
         log_api_response(delete_res.request, delete_res)
 
-    assert delete_res.status_code == 403
+    assert (
+        delete_res.status_code == 403
+    ), "Regular user can delete the asset while shouldn't"
 
     # Verify asset still exists (as admin)
     with httpx.Client(base_url=base_url) as client:
@@ -219,7 +251,9 @@ def test_user_cannot_delete_asset(
             f"/assets/{asset_id}",
             headers={"Authorization": f"Bearer {admin_alpha_token}"},
         )
-    assert get_res.status_code == 200
+    assert (
+        get_res.status_code == 200
+    ), f"Asset missing after failed delete attempt: expected 200 OK, got {get_res.status_code}"
 
 
 def test_user_cannot_update_asset(
@@ -241,7 +275,9 @@ def test_user_cannot_update_asset(
         )
         log_api_response(update_res.request, update_res)
 
-    assert update_res.status_code == 403
+    assert (
+        update_res.status_code == 403
+    ), "Regular user can update the asset while shouldn't"
 
     # Verify asset remains unchanged (as admin)
     with httpx.Client(base_url=base_url) as client:
@@ -249,5 +285,9 @@ def test_user_cannot_update_asset(
             f"/assets/{asset_id}",
             headers={"Authorization": f"Bearer {admin_alpha_token}"},
         )
-    assert get_res.status_code == 200
-    assert get_res.json()["name"] == test_asset["name"]
+    assert (
+        get_res.status_code == 200
+    ), f"Asset missing after failed update attempt: expected 200 OK, got {get_res.status_code}"
+    assert (
+        get_res.json()["name"] == test_asset["name"]
+    ), "Asset name was modified despite 403 Forbidden"
