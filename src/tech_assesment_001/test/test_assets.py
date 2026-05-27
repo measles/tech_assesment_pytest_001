@@ -220,3 +220,34 @@ def test_user_cannot_delete_asset(
             headers={"Authorization": f"Bearer {admin_alpha_token}"},
         )
     assert get_res.status_code == 200
+
+
+def test_user_cannot_update_asset(
+    base_url, test_asset, admin_alpha_token, user_alpha_token
+):  # pylint: disable=redefined-outer-name
+    """
+    Test that a regular user cannot update an asset.
+    (Checklist item 8)
+    """
+    asset_id = test_asset["id"]
+
+    # Try to update as regular user
+    update_payload = {"name": "Malicious Update", "region": "us-west-1"}
+    with httpx.Client(base_url=base_url) as client:
+        update_res = client.put(
+            f"/assets/{asset_id}",
+            headers={"Authorization": f"Bearer {user_alpha_token}"},
+            json=update_payload,
+        )
+        log_api_response(update_res.request, update_res)
+
+    assert update_res.status_code == 403
+
+    # Verify asset remains unchanged (as admin)
+    with httpx.Client(base_url=base_url) as client:
+        get_res = client.get(
+            f"/assets/{asset_id}",
+            headers={"Authorization": f"Bearer {admin_alpha_token}"},
+        )
+    assert get_res.status_code == 200
+    assert get_res.json()["name"] == test_asset["name"]
