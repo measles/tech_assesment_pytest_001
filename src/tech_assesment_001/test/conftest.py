@@ -4,6 +4,7 @@ import pytest
 from pytest_html import extras  # type: ignore[import-untyped]
 
 from tech_assesment_001.utils.auth import get_tokens
+from tech_assesment_001.utils.credentials import load_credentials
 
 # Global cache for tokens to avoid 429 Too Many Requests
 TOKEN_CACHE: dict[str, str] = {}
@@ -35,6 +36,24 @@ def auth_tokens(base_url):  # pylint: disable=redefined-outer-name
         return TOKEN_CACHE[email]
 
     return _get_cached_token
+
+
+@pytest.fixture
+def admin_alpha_token(auth_tokens):  # pylint: disable=redefined-outer-name
+    """Fixture to provide the admin token for org-alpha."""
+    orgs = load_credentials()
+    admin_creds = orgs["org-alpha"].admin
+    assert admin_creds, "Admin credentials for org-alpha not found"
+    return auth_tokens(admin_creds.email, admin_creds.password)
+
+
+@pytest.fixture
+def user_alpha_token(auth_tokens):  # pylint: disable=redefined-outer-name
+    """Fixture to provide the user token for org-alpha."""
+    orgs = load_credentials()
+    user_creds = orgs["org-alpha"].user
+    assert user_creds, "User credentials for org-alpha not found"
+    return auth_tokens(user_creds.email, user_creds.password)
 
 
 @pytest.hookimpl(hookwrapper=True)
