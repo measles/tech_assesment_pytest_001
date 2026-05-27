@@ -190,3 +190,59 @@ def test_admin_can_update_asset(
     assert get_data["name"] == update_payload["name"]
     assert get_data["region"] == update_payload["region"]
     assert get_data["tags"]["env"] == "prod"
+
+
+def test_admin_can_delete_asset(
+    base_url, created_assets
+):  # pylint: disable=redefined-outer-name
+    """
+    Test that an administrator can successfully delete an asset.
+    (Checklist item 5)
+    """
+    orgs = load_credentials()
+    org_alpha = orgs["org-alpha"]
+    admin_creds = org_alpha.admin
+    assert admin_creds, "Admin credentials for org-alpha not found"
+    admin_token, _ = get_tokens(base_url, admin_creds.email, admin_creds.password)
+
+    # 1. Create an asset to delete
+    create_name = generate_timestamped_name("Asset to Delete")
+    create_payload = {
+        "name": create_name,
+        "asset_type": "EC2",
+        "cloud_account": "123456789",
+        "region": "us-east-1",
+    }
+    with httpx.Client(base_url=base_url) as client:
+        create_res = client.post(
+            "/assets",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            json=create_payload,
+        )
+        log_api_response(create_res.request, create_res)
+
+    assert create_res.status_code in (200, 201)
+    asset_id = create_res.json()["id"]
+    # We don't necessarily need to add to created_assets if we delete it in the test,
+    # but adding it ensures cleanup if the test fails before deletion.
+    created_assets.append(asset_id)
+
+    # 2. Delete the asset
+    with httpx.Client(base_url=base_url) as client:
+        delete_res = client.delete(
+            f"/assets/{asset_id}",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        log_api_response(delete_res.request, delete_res)
+
+    assert delete_res.status_code in (200, 204)
+
+    # 3. Verify deletion with a GET request
+    with httpx.Client(base_url=base_url) as client:
+        get_res = client.get(
+            f"/assets/{asset_id}",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        log_api_response(get_res.request, get_res)
+
+    assert get_res.status_code == 404
