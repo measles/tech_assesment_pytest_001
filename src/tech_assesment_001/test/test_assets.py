@@ -5,6 +5,7 @@ import pytest
 
 from tech_assesment_001.utils.auth import get_tokens
 from tech_assesment_001.utils.credentials import load_credentials
+from tech_assesment_001.utils.data import generate_timestamped_name
 from tech_assesment_001.utils.logger import log_api_response
 
 
@@ -94,8 +95,9 @@ def test_admin_can_create_asset(
     assert admin_creds, "Admin credentials for org-alpha not found"
     admin_token, _ = get_tokens(base_url, admin_creds.email, admin_creds.password)
 
+    asset_name = generate_timestamped_name("Test Asset Admin")
     asset_payload = {
-        "name": "Test Asset Admin",
+        "name": asset_name,
         "asset_type": "EC2",
         "cloud_account": "123456789",
         "region": "us-east-1",
@@ -117,3 +119,74 @@ def test_admin_can_create_asset(
 
     assert data["name"] == asset_payload["name"]
     assert data["asset_type"] == asset_payload["asset_type"]
+
+
+def test_admin_can_update_asset(
+    base_url, created_assets
+):  # pylint: disable=redefined-outer-name,too-many-locals
+    """
+
+    Test that an administrator can successfully update an asset.
+    (Checklist item 4)
+    """
+    orgs = load_credentials()
+    org_alpha = orgs["org-alpha"]
+    admin_creds = org_alpha.admin
+    assert admin_creds, "Admin credentials for org-alpha not found"
+    admin_token, _ = get_tokens(base_url, admin_creds.email, admin_creds.password)
+
+    # 1. Create an asset to update
+    create_name = generate_timestamped_name("Asset to Update")
+    create_payload = {
+        "name": create_name,
+        "asset_type": "EC2",
+        "cloud_account": "123456789",
+        "region": "us-east-1",
+        "tags": {"env": "dev"},
+    }
+    with httpx.Client(base_url=base_url) as client:
+        create_res = client.post(
+            "/assets",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            json=create_payload,
+        )
+        log_api_response(create_res.request, create_res)
+
+    assert create_res.status_code in (200, 201)
+    asset_id = create_res.json()["id"]
+    created_assets.append(asset_id)
+
+    # 2. Update the asset
+    update_name = generate_timestamped_name("Updated Asset Name")
+    update_payload = {
+        "name": update_name,
+        "region": "us-west-2",
+        "tags": {"env": "prod", "updated": "true"},
+    }
+    with httpx.Client(base_url=base_url) as client:
+        update_res = client.put(
+            f"/assets/{asset_id}",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            json=update_payload,
+        )
+        log_api_response(update_res.request, update_res)
+
+    assert update_res.status_code == 200
+    updated_data = update_res.json()
+    assert updated_data["name"] == update_payload["name"]
+    assert updated_data["region"] == update_payload["region"]
+    assert updated_data["tags"]["env"] == "prod"
+
+    # 3. Verify the update was persisted with a GET request
+    with httpx.Client(base_url=base_url) as client:
+        get_res = client.get(
+            f"/assets/{asset_id}",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        log_api_response(get_res.request, get_res)
+
+    assert get_res.status_code == 200
+    get_data = get_res.json()
+    assert get_data["name"] == update_payload["name"]
+    assert get_data["region"] == update_payload["region"]
+    assert get_data["tags"]["env"] == "prod"
