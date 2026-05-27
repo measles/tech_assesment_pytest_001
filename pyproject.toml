@@ -5,6 +5,7 @@ description = "Tech assesment 001"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "httpx>=0.28.1",
     "nox>=2026.4.10",
     "pytest>=9.0.3",
     "pytest-html>=4.2.0",

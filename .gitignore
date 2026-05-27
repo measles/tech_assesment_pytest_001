@@ -1,3 +1,6 @@
+__pycache__
 .venv
 .nox
 .mypy_cache
+CREDENTIALS.txt
+report.html
