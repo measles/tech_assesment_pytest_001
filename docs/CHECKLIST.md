@@ -13,12 +13,10 @@
 12. User can read the scan results
 13. Administrator can read a report
 14. User can read a report
-15. Administrator can start a scan
-16. User cannot start a scan
-17. Administrator can read a scan status
-18. User can read a scan status
-19. API helth check may be performed without any authentication.
-20. User from one organization cannot read esset or scan results for other organization.
+15. Administrator can read a scan status
+17. User can read a scan status
+18. API helth check may be performed without any authentication.
+19. User from one organization cannot read esset or scan results for other organization.
 
 
 
