@@ -25,12 +25,18 @@ def pytest_runtest_makereport(item, call):
     outcome = yield
     report = outcome.get_result()
 
-    if report.when == "call":
+    if report.when in ("call", "teardown"):
         # Capture logs from the 'caplog' fixture if available
         caplog = item.funcargs.get("caplog")
         if caplog:
-            log_content = caplog.text
-            if log_content:
-                if not hasattr(report, "extras"):
-                    report.extras = []
-                report.extras.append(extras.text(log_content, name="API Logs"))
+            try:
+                log_content = caplog.text
+                if log_content:
+                    if not hasattr(report, "extras"):
+                        report.extras = []
+                    # Distinguish between call and teardown logs
+                    name = "API Logs" if report.when == "call" else "Teardown API Logs"
+                    report.extras.append(extras.text(log_content, name=name))
+            except (KeyError, AttributeError):
+                # caplog might not be available or its stash key might be missing during some phases
+                pass

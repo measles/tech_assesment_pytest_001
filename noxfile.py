@@ -33,7 +33,7 @@ def pylint(session):
     session.run("pylint", "src", "noxfile.py")
 
 
-@nox.session(python=False, requires=["black", "isort", "pylint"])
-def precommit(session):
+@nox.session(python=False)
+def lint(session):
     """Run all linters and formatters."""
-    session.log("Pre-commit sequence done")
+    session.run("nox", "-s", "black", "isort", "pylint")
