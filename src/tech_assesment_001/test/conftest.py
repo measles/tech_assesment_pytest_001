@@ -1,5 +1,7 @@
 """Shared test fixtures and hooks for the tech assessment tests."""
 
+import os
+
 import pytest
 from pytest_html import extras  # type: ignore[import-untyped]
 
@@ -12,8 +14,8 @@ TOKEN_CACHE: dict[str, str] = {}
 
 @pytest.fixture(scope="session")
 def base_url():
-    """Returns the base URL for the API."""
-    return "http://54.226.15.13:8000"
+    """Returns the base URL for the API from environment variable or default."""
+    return os.getenv("BASE_URL", "http://54.226.15.13:8000")
 
 
 @pytest.fixture(autouse=True)

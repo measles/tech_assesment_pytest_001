@@ -38,10 +38,16 @@ jobs:
 
       - name: Run Lint and Tests (Push/PR)
         if: github.event_name != 'workflow_call'
+        env:
+          BASE_URL: ${{ vars.BASE_URL }}
+          CREDENTIALS: ${{ secrets.CREDENTIALS }}
         run: uv run nox -s lint && uv run nox -s tests
 
       - name: Run Tests (Workflow Call)
         if: github.event_name == 'workflow_call'
+        env:
+          BASE_URL: ${{ vars.BASE_URL }}
+          CREDENTIALS: ${{ secrets.CREDENTIALS }}
         run: uv run nox -s tests
 
       - name: Upload Test Report
