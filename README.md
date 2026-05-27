@@ -18,6 +18,11 @@ uv sync --dev
 source .venv/bin/activate
 ```
 
+To setup pre-commit actions run:
+```bash
+pre-commit install 
+```
+
 ## Execution
 The project uses [nox](https://nox.thea.codes/) to automate test execution and linting.
 
