@@ -1,10 +1,15 @@
 """Shared test fixtures and hooks for the tech assessment tests."""
 
 import pytest
-from pytest_html import extras
+from pytest_html import extras  # type: ignore[import-untyped]
+
+from tech_assesment_001.utils.auth import get_tokens
+
+# Global cache for tokens to avoid 429 Too Many Requests
+TOKEN_CACHE: dict[str, str] = {}
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def base_url():
     """Returns the base URL for the API."""
     return "http://54.226.15.13:8000"
@@ -14,6 +19,22 @@ def base_url():
 def setup_api_logging(caplog):
     """Automatically set the api_test logger level for all tests."""
     caplog.set_level("INFO", logger="api_test")
+
+
+@pytest.fixture(scope="session")
+def auth_tokens(base_url):  # pylint: disable=redefined-outer-name
+    """
+    Session-scoped fixture to provide cached authentication tokens.
+    Returns a function that takes email and password and returns a token.
+    """
+
+    def _get_cached_token(email, password):
+        if email not in TOKEN_CACHE:
+            token, _ = get_tokens(base_url, email, password)
+            TOKEN_CACHE[email] = token
+        return TOKEN_CACHE[email]
+
+    return _get_cached_token
 
 
 @pytest.hookimpl(hookwrapper=True)

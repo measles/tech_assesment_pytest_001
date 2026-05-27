@@ -3,14 +3,13 @@
 import httpx
 import pytest
 
-from tech_assesment_001.utils.auth import get_tokens
 from tech_assesment_001.utils.credentials import load_credentials
 from tech_assesment_001.utils.data import generate_timestamped_name
 from tech_assesment_001.utils.logger import log_api_response
 
 
 @pytest.fixture
-def created_assets(base_url):
+def created_assets(base_url, auth_tokens):  # pylint: disable=redefined-outer-name
     """
     Fixture to track created assets and delete them after the test.
     """
@@ -27,7 +26,7 @@ def created_assets(base_url):
     if not admin_creds:
         return
 
-    admin_token, _ = get_tokens(base_url, admin_creds.email, admin_creds.password)
+    admin_token = auth_tokens(admin_creds.email, admin_creds.password)
     with httpx.Client(base_url=base_url) as client:
         for asset_id in assets_to_delete:
             response = client.delete(
@@ -37,7 +36,9 @@ def created_assets(base_url):
             log_api_response(response.request, response)
 
 
-def test_user_regardless_of_role_can_read_assets(base_url):
+def test_user_regardless_of_role_can_read_assets(
+    base_url, auth_tokens
+):  # pylint: disable=redefined-outer-name
     """
     Test that both admin and regular users can read the asset list.
     (Checklist item 2)
@@ -49,7 +50,7 @@ def test_user_regardless_of_role_can_read_assets(base_url):
     # 1. Test as Admin
     admin_creds = org_alpha.admin
     assert admin_creds, "Admin credentials for org-alpha not found"
-    admin_token, _ = get_tokens(base_url, admin_creds.email, admin_creds.password)
+    admin_token = auth_tokens(admin_creds.email, admin_creds.password)
 
     with httpx.Client(base_url=base_url) as client:
         admin_response = client.get(
@@ -62,7 +63,7 @@ def test_user_regardless_of_role_can_read_assets(base_url):
     # 2. Test as Regular User
     user_creds = org_alpha.user
     assert user_creds, "User credentials for org-alpha not found"
-    user_token, _ = get_tokens(base_url, user_creds.email, user_creds.password)
+    user_token = auth_tokens(user_creds.email, user_creds.password)
 
     with httpx.Client(base_url=base_url) as client:
         user_response = client.get(
@@ -83,7 +84,7 @@ def test_user_regardless_of_role_can_read_assets(base_url):
 
 
 def test_admin_can_create_asset(
-    base_url, created_assets
+    base_url, created_assets, auth_tokens
 ):  # pylint: disable=redefined-outer-name
     """
     Test that an administrator can successfully create an asset.
@@ -93,7 +94,7 @@ def test_admin_can_create_asset(
     org_alpha = orgs["org-alpha"]
     admin_creds = org_alpha.admin
     assert admin_creds, "Admin credentials for org-alpha not found"
-    admin_token, _ = get_tokens(base_url, admin_creds.email, admin_creds.password)
+    admin_token = auth_tokens(admin_creds.email, admin_creds.password)
 
     asset_name = generate_timestamped_name("Test Asset Admin")
     asset_payload = {
@@ -122,10 +123,9 @@ def test_admin_can_create_asset(
 
 
 def test_admin_can_update_asset(
-    base_url, created_assets
+    base_url, created_assets, auth_tokens
 ):  # pylint: disable=redefined-outer-name,too-many-locals
     """
-
     Test that an administrator can successfully update an asset.
     (Checklist item 4)
     """
@@ -133,7 +133,7 @@ def test_admin_can_update_asset(
     org_alpha = orgs["org-alpha"]
     admin_creds = org_alpha.admin
     assert admin_creds, "Admin credentials for org-alpha not found"
-    admin_token, _ = get_tokens(base_url, admin_creds.email, admin_creds.password)
+    admin_token = auth_tokens(admin_creds.email, admin_creds.password)
 
     # 1. Create an asset to update
     create_name = generate_timestamped_name("Asset to Update")
@@ -193,7 +193,7 @@ def test_admin_can_update_asset(
 
 
 def test_admin_can_delete_asset(
-    base_url, created_assets
+    base_url, created_assets, auth_tokens
 ):  # pylint: disable=redefined-outer-name
     """
     Test that an administrator can successfully delete an asset.
@@ -203,7 +203,7 @@ def test_admin_can_delete_asset(
     org_alpha = orgs["org-alpha"]
     admin_creds = org_alpha.admin
     assert admin_creds, "Admin credentials for org-alpha not found"
-    admin_token, _ = get_tokens(base_url, admin_creds.email, admin_creds.password)
+    admin_token = auth_tokens(admin_creds.email, admin_creds.password)
 
     # 1. Create an asset to delete
     create_name = generate_timestamped_name("Asset to Delete")
@@ -223,8 +223,6 @@ def test_admin_can_delete_asset(
 
     assert create_res.status_code in (200, 201)
     asset_id = create_res.json()["id"]
-    # We don't necessarily need to add to created_assets if we delete it in the test,
-    # but adding it ensures cleanup if the test fails before deletion.
     created_assets.append(asset_id)
 
     # 2. Delete the asset
@@ -246,3 +244,53 @@ def test_admin_can_delete_asset(
         log_api_response(get_res.request, get_res)
 
     assert get_res.status_code == 404
+
+
+def test_user_can_read_asset(
+    base_url, created_assets, auth_tokens
+):  # pylint: disable=redefined-outer-name,too-many-locals
+    """
+    Test that a regular user can successfully read an asset.
+    (Checklist item 6)
+    """
+    orgs = load_credentials()
+    org_alpha = orgs["org-alpha"]
+    admin_creds = org_alpha.admin
+    user_creds = org_alpha.user
+    assert admin_creds and user_creds, "Credentials for org-alpha not found"
+
+    admin_token = auth_tokens(admin_creds.email, admin_creds.password)
+    user_token = auth_tokens(user_creds.email, user_creds.password)
+
+    # 1. Create an asset as admin
+    create_name = generate_timestamped_name("User Read Asset")
+    create_payload = {
+        "name": create_name,
+        "asset_type": "EC2",
+        "cloud_account": "123456789",
+        "region": "us-east-1",
+    }
+    with httpx.Client(base_url=base_url) as client:
+        create_res = client.post(
+            "/assets",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            json=create_payload,
+        )
+        log_api_response(create_res.request, create_res)
+
+    assert create_res.status_code in (200, 201)
+    asset_id = create_res.json()["id"]
+    created_assets.append(asset_id)
+
+    # 2. Read the asset as regular user
+    with httpx.Client(base_url=base_url) as client:
+        get_res = client.get(
+            f"/assets/{asset_id}",
+            headers={"Authorization": f"Bearer {user_token}"},
+        )
+        log_api_response(get_res.request, get_res)
+
+    assert get_res.status_code == 200
+    get_data = get_res.json()
+    assert get_data["id"] == asset_id
+    assert get_data["name"] == create_name

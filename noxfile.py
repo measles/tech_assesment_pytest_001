@@ -34,6 +34,12 @@ def pylint(session):
 
 
 @nox.session(python=False)
+def mypy(session):
+    """Run mypy."""
+    session.run("mypy", "src", "noxfile.py")
+
+
+@nox.session(python=False, requires=["black", "isort", "mypy", "pylint"])
 def lint(session):
     """Run all linters and formatters."""
-    session.run("nox", "-s", "black", "isort", "pylint")
+    session.log("Pre-review format and lint checks are done.")

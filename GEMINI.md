@@ -18,3 +18,4 @@
 - **Mandate:** Before providing changes for review, always run `uv run nox -s lint` to ensure code quality and formatting.
 - **Mandate:** Always implement teardown fixtures for tests that create resources (e.g., assets, scans) to ensure the environment is cleaned up after test execution or failure.
 - **Mandate:** Always randomize names of created resources (e.g., assets) using a timestamp to ensure uniqueness and avoid collisions. Format: "Base Name HH:MM:SS.ffffffTDD-MM-YYYY" (e.g., "Test Asset 18:07:23.23425T27-05-2016").
+- **Mandate:** Do not modify `noxfile.py` without explicit approval from the user.
