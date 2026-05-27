@@ -45,5 +45,15 @@ To run all formatters and linters (`black`, `isort`, `pylint`), execute:
 uv run nox -s lint
 ```
 
+### Preparing CI of a cloned repo to execution
+CI pipeline should run tests in three cases:
+1. Pull request to `main` branch
+2. Merge to `main` branch
+3. Externall call with a proper token
+
+To prepare your clonned repo to execution you should set:
+ - **BASE_URL** repo variable
+ - **CREDENTIALS** repo secret
+
 ## Documentation
 You may read [CHECKLIST](./docs/CHECKLIST.md) to have a list of implemented checks.
