@@ -17,3 +17,6 @@ To do it manually, execute:
 uv sync --dev
 source .venv/bin/activate
 ```
+
+## Documentation
+You may read [CHECKLIST](./docs/CHECKLIST.md) to have a list of implemented checks.
