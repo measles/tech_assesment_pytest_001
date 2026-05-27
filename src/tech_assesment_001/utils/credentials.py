@@ -1,4 +1,5 @@
 """Module for parsing and storing credentials grouped by organization and role."""
+
 import os
 from dataclasses import dataclass
 from enum import Enum
@@ -7,21 +8,27 @@ from typing import Dict, Optional
 
 class Role(Enum):
     """Enumeration for user roles."""
+
     ADMIN = "admin"
     USER = "user"
+
 
 @dataclass
 class Creds:
     """Dataclass to store email and password."""
+
     email: str
     password: str
+
 
 @dataclass
 class Organization:
     """Dataclass to store credentials for an organization."""
+
     name: str
     admin: Optional[Creds] = None
     user: Optional[Creds] = None
+
 
 def load_credentials(file_path="CREDENTIALS.txt") -> Dict[str, Organization]:
     """
@@ -45,10 +52,10 @@ def load_credentials(file_path="CREDENTIALS.txt") -> Dict[str, Organization]:
                 # Extract organization name (SLD)
                 # admin@org-alpha.com -> domain: org-alpha.com -> sld: org-alpha
                 try:
-                    domain = email.split('@')[1]
-                    org_name = domain.split('.')[0]
+                    domain = email.split("@")[1]
+                    org_name = domain.split(".")[0]
                 except IndexError:
-                    continue # Skip malformed emails
+                    continue  # Skip malformed emails
 
                 if org_name not in orgs:
                     orgs[org_name] = Organization(name=org_name)

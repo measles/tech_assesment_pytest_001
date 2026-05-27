@@ -1,4 +1,5 @@
-"""Nox configuration for running tests."""
+"""Nox configuration for running tests and linting."""
+
 import nox
 
 
@@ -12,3 +13,27 @@ def tests(session):
         "--self-contained-html",
         "-v",
     )
+
+
+@nox.session(python=False)
+def black(session):
+    """Run black formatter."""
+    session.run("black", "src", "noxfile.py")
+
+
+@nox.session(python=False)
+def isort(session):
+    """Run isort formatter."""
+    session.run("isort", "src", "noxfile.py")
+
+
+@nox.session(python=False)
+def pylint(session):
+    """Run pylint."""
+    session.run("pylint", "src", "noxfile.py")
+
+
+@nox.session(python=False, requires=["black", "isort", "pylint"])
+def precommit(session):
+    """Run all linters and formatters."""
+    session.log("Pre-commit sequence done")

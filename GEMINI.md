@@ -15,3 +15,4 @@
 ## Workflow
 - The user will handle all commits. Do not stage or commit changes unless explicitly requested, and even then, prefer providing the changes for the user to review and commit themselves.
 - Make changes as atomic as possible. Implement one check from the checklist at a time, including any directly related and necessary library changes.
+- **Mandate:** Before providing changes for review, always run `uv run nox -s lint` to ensure code quality and formatting.

@@ -19,7 +19,10 @@ source .venv/bin/activate
 ```
 
 ## Execution
-The project uses [nox](https://nox.thea.codes/) to automate test execution. To run all tests and generate an HTML report, execute:
+The project uses [nox](https://nox.thea.codes/) to automate test execution and linting.
+
+### Running Tests
+To run all tests and generate an HTML report, execute:
 
 ```bash
 uv run nox -s tests
@@ -29,6 +32,13 @@ This will:
 1. Run all tests in `src/tech_assesment_001`.
 2. Generate a self-contained HTML report at `report.html`.
 3. Display test results in a concise single-row format.
+
+### Linting and Formatting
+To run all formatters and linters (`black`, `isort`, `pylint`), execute:
+
+```bash
+uv run nox -s lint
+```
 
 ## Documentation
 You may read [CHECKLIST](./docs/CHECKLIST.md) to have a list of implemented checks.
