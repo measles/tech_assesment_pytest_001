@@ -51,3 +51,18 @@ def test_admin_can_create_scan_and_status_is_readable(
     user_data = user_status_res.json()
     assert user_data["id"] == scan_id
     assert user_data["status"] in ("IN_PROGRESS", "COMPLETED", "FAILED")
+
+
+def test_user_cannot_create_scan(base_url, user_alpha_token):
+    """
+    Test that a regular user cannot start a discovery scan.
+    (Checklist item 10)
+    """
+    with httpx.Client(base_url=base_url) as client:
+        response = client.post(
+            "/scans",
+            headers={"Authorization": f"Bearer {user_alpha_token}"},
+        )
+        log_api_response(response.request, response)
+
+    assert response.status_code == 403
