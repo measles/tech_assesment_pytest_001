@@ -1,4 +1,4 @@
-# Checklist for API testing
+# Checklist for API testing:
 1. It's possible to perform authorisation. In case of success the response will contain the exchange tocken and refresh tocken.
 2. User regardless of role can read the asset list for the organization one belongs. 
 3. Administrator can create an asset
