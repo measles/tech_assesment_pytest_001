@@ -1,0 +1,24 @@
+[project]
+name = "001-techassesment"
+version = "0.1.0"
+description = "Tech assesment 001"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "nox>=2026.4.10",
+    "pytest>=9.0.3",
+    "pytest-html>=4.2.0",
+]
+
+[dependency-groups]
+dev = [
+    "black>=26.5.1",
+    "isort>=8.0.1",
+    "mypy>=2.1.0",
+    "pre-commit>=4.6.0",
+    "pylint>=4.0.5",
+]
+
+
+[tool.pylint]
+"message_control".max-line-length = 119
