@@ -291,3 +291,29 @@ def test_user_cannot_update_asset(
     assert (
         get_res.json()["name"] == test_asset["name"]
     ), "Asset name was modified despite 403 Forbidden"
+
+
+def test_organization_asset_isolation(
+    base_url, test_asset, auth_tokens
+):  # pylint: disable=redefined-outer-name
+    """
+    Test that a user from one organization cannot read assets from another organization.
+    (Checklist item 19)
+    """
+    asset_id = test_asset["id"]
+
+    # Beta admin credentials
+    admin_beta_token = auth_tokens("admin@org-beta.com", "Beta@1234")
+
+    # Try to read alpha asset as beta admin
+    with httpx.Client(base_url=base_url) as client:
+        get_res = client.get(
+            f"/assets/{asset_id}",
+            headers={"Authorization": f"Bearer {admin_beta_token}"},
+        )
+        log_api_response(get_res.request, get_res)
+
+    assert get_res.status_code in (403, 404), (
+        f"Cross-organization asset access vulnerability! "
+        f"Beta admin can access Alpha asset with status {get_res.status_code}"
+    )

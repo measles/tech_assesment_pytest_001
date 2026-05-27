@@ -16,7 +16,4 @@
 15. Administrator can read a scan status
 17. User can read a scan status
 18. API helth check may be performed without any authentication.
-19. User from one organization cannot read esset or scan results for other organization.
-
-
-
+19. User from one organization cannot read asset, or scan results or report for other organization.
